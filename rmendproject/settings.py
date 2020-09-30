@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
-    'rmend_auth'
+    'rmend_auth',
+    'rmend_authorities'
 ]
 
 MIDDLEWARE = [
