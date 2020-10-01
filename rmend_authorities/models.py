@@ -3,9 +3,9 @@ from django.contrib.gis.db import models
 class Authority(models.Model):
     name = models.CharField(max_length=100, unique=True)
     authority_type = models.CharField(max_length=100)
-    adress = models.CharField(max_length=250)
+    address = models.CharField(max_length=250)
     phone_number = models.CharField(max_length=15)
-    email = models.CharField(max_length=150)
+    email = models.EmailField(_('email address'))
     website_url = models.CharField(max_length=250)
 
     @classmethod
@@ -43,7 +43,7 @@ class Authority(models.Model):
 
     
 class AuthorityIssueGroup(models.Model):
-    authority = models.OneToOneField(Authority, on_delete=models.CASCADE)
+    authority = models.ForeignKey(Authority, on_delete=models.CASCADE)
     name = models.CharField(max_length=100, unique=True)
 
     @classmethod
