@@ -47,9 +47,8 @@ class Authority(models.Model):
     def update_website(self, website_url):
         self.website_url = website_url
 
-    
-class AuthorityIssueGroup(models.Model):
-    authority = models.ForeignKey(Authority, on_delete=models.CASCADE)
+class AuthorityIssueTypeGroup(models.Model):
+    authority = models.ForeignKey(Authority, on_delete=models.CASCADE, related_name='issue_groups')
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
@@ -60,17 +59,11 @@ class AuthorityIssueGroup(models.Model):
         try:
             cls.objects.get(name=name)
             return True
-        except Authority.DoesNotExist:
+        except AuthorityIssueTypeGroup.DoesNotExist:
             return False
 
-    def update_name(self, name):
-        if is_name_taken(name):
-            return
-        self.name = name
-        self.save()
-
-class AuthorityIssue(models.Model):
-    issue_group = models.ForeignKey(AuthorityIssueGroup, on_delete=models.CASCADE)
+class AuthorityIssueType(models.Model):
+    issue_group = models.ForeignKey(AuthorityIssueTypeGroup, related_name='issue_types', on_delete=models.CASCADE)
     name = models.CharField(max_length=100, unique=True)
     
     def __str__(self):
@@ -81,12 +74,34 @@ class AuthorityIssue(models.Model):
         try:
             cls.objects.get(name=name)
             return True
-        except Authority.DoesNotExist:
+        except AuthorityIssueType.DoesNotExist:
             return False
 
-    def update_name(self, name):
-        if is_name_taken(name):
-            return
-        self.name = name
-        self.save()
+class BaseIssueTypeGroup(models.Model):
+    name = models.CharField(max_length=100, unique=True)
 
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def is_name_taken(cls, name):
+        try:
+            cls.objects.get(name=name)
+            return True
+        except BaseIssueTypeGroup.DoesNotExist:
+            return False
+    
+class BaseIssueType(models.Model):
+    issue_group = models.ForeignKey(BaseIssueTypeGroup, related_name='issue_types', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def is_name_taken(cls, name):
+        try:
+            cls.objects.get(name=name)
+            return True
+        except BaseIssueType.DoesNotExist:
+            return False

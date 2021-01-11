@@ -4,10 +4,10 @@ from django.utils.translation import gettext_lazy as _
 
 class Report(models.Model):
     authority = models.ForeignKey('rmend_authorities.Authority', on_delete=models.CASCADE)
+    report_type = models.ForeignKey('rmend_authorities.AuthorityIssueType', null=True, on_delete=models.SET_NULL)
     location = models.PointField()
     details = models.TextField(blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    report_type = models.CharField(max_length=100)
     nearest_address = models.TextField(blank=True, null=True)
 
     sender_email = models.EmailField(_('email address'))
