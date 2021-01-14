@@ -5,7 +5,7 @@ services:
     build: ./rmend_project
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./rmend_project/:/usr/src/rmend_project/
+      - ./rmend_project/:/rmend_project
     ports:
       - 8000:8000
     env_file:
