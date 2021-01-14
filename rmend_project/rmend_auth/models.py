@@ -4,22 +4,24 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .managers import UserManager
-import uuid
+import re
 
 
 class User(AbstractUser):
     first_name = None
     last_name = None
 
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     email = models.EmailField(_('email address'), unique=True,)
+    username = models.CharField(max_length=100, blank=False, null=False,)
+    phone_number = models.CharField(max_length=20, default='', blank=True)
+    auth_code = models.CharField(max_length=100, default='', blank=True)
+
+    is_admin = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False,)
     is_deleted = models.BooleanField(_('is deleted'), default=False,)
-    username = models.CharField(max_length=100, blank=False, null=False,)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
-
+    REQUIRED_FIELDS = ['username', 'phone_number', 'auth_code']
     objects = UserManager()
 
     def __str__(self):
@@ -39,6 +41,10 @@ class User(AbstractUser):
         temp_username = cls.sanitise_username(username)
         return temp_username
 
+    @classmethod
+    def sanitise_username(cls, username):
+        return re.sub('[^a-zA-Z]', '', username)
+
     def update_username(self, username):
         check_username_not_taken(user=self, username=username)
         self.username = username
@@ -48,21 +54,3 @@ class User(AbstractUser):
         self.set_password(password)
         self._reset_auth_token()
         self.save()
-
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    displayName = models.CharField(max_length=100, default='', blank=True)
-    phoneNumber = models.CharField(max_length=20, default='', blank=True)
-    authCode = models.CharField(max_length=100, blank=True)
-
-    @receiver(post_save, sender=User)
-    def create_user_profile(sender, instance, created, **kwargs):
-        if created:
-            UserProfile.objects.create(user=instance)
-
-    def __repr__(self):
-        return '<UserProfile %s>' % self.user.username
-
-    def __str__(self):
-        return self.user.username

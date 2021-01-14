@@ -1,24 +1,16 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User, UserProfile
+from .models import User
 
 
-class UserProfileInline(admin.StackedInline):
-    model = UserProfile
-    can_delete = False
-    fk_name = 'user'
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
+@admin.register(User)
 class UserAdmin(UserAdmin):
     model = User
     list_display = ('email', 'is_staff', 'is_active')
     list_filter = ('email', 'is_staff', 'is_active')
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
+        (None, {'fields': ('email', 'password', 'phone_number', 'auth_code')}),
         ('Permissions', {'fields': ('is_staff', 'is_active')}),
     )
     add_fieldsets = (
@@ -29,10 +21,6 @@ class UserAdmin(UserAdmin):
     )
     search_fields = ('email',)
     ordering = ('email',)
-    inlines = (UserProfileInline, )
 
     def has_add_permission(self, request, obj=None):
         return False
-
-
-admin.site.register(User, UserAdmin)
