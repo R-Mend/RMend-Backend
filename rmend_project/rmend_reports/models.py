@@ -6,13 +6,13 @@ class Report(models.Model):
     authority = models.ForeignKey('rmend_authorities.Authority', on_delete=models.CASCADE)
     report_type = models.ForeignKey('rmend_authorities.AuthorityIssueType', null=True, on_delete=models.SET_NULL)
     location = models.PointField()
-    details = models.TextField(blank=True, null=True)
-    date_created = models.DateTimeField(auto_now_add=True)
-    nearest_address = models.TextField(blank=True, null=True)
+    details = models.TextField(blank=True, editable=False)
+    nearest_address = models.TextField(blank=True, editable=False)
+    date_created = models.DateTimeField(auto_now_add=True, editable=False)
 
-    sender_email = models.EmailField(_('email address'))
-    sender_name = models.CharField(max_length=100)
-    sender_phone = models.CharField(max_length=100, blank=True, null=True)
+    sender_email = models.EmailField(_('email address'), editable=False)
+    sender_name = models.CharField(max_length=100, editable=False)
+    sender_phone = models.CharField(max_length=100, blank=True, editable=False)
 
     priority = models.BooleanField(default=False)
 

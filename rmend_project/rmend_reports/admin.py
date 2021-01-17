@@ -3,7 +3,8 @@ from django.contrib.gis.admin import OSMGeoAdmin
 from .models import Report
 
 class ReportAdmin(OSMGeoAdmin):
-    list_display = [field.name for field in Report._meta.get_fields()]
-    # list_display = ('authority', 'location', 'details', 'date_created', 'report_type', 'nearest_address')
+    list_display = ('authority', 'report_type', 'date_created', 'nearest_address')
+    readonly_fields = ('authority', 'report_type', 'location', 'details', 'nearest_address', 
+        'date_created', 'sender_email', 'sender_name', 'sender_phone')
 
 admin.site.register(Report, ReportAdmin)

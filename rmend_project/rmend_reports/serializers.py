@@ -9,28 +9,32 @@ class AdminReportSeralizer(gis_serializers.GeoFeatureModelSerializer):
 
     class Meta:
         model = Report
-        geo_field = "location"
-        id_field = False # we don't want to return id field in the response
-        fields = ("location", 'authority', 'details', 'date_created', 'report_type', 'nearest_address',
+        geo_field = 'location'
+        fields = ('location', 'authority', 'details', 'date_created', 'report_type', 'nearest_address',
                     'sender_email', 'sender_name', 'sender_phone', 'priority', 'state')
 
-        def create(self, validated_data):
-            return Report.objects.create(**validated_data)
+    def update(self, instance, validated_data):
+        instance.priority = validated_data.get('priority', instance.priority)
+        instance.state = validated_data.get('state', instance.state)
+        instance.save()
+        return instance
 
-        def update(self, instance, validated_data):
-            instance.priority = validated_data.get('priority', instance.priority)
-            instance.state = validated_data.get('state', instance.state)
-            instance.save()
-            return instance
-
-
-class ReportSeralizer(gis_serializers.GeoFeatureModelSerializer):
+class ReportGetSeralizer(gis_serializers.GeoFeatureModelSerializer):
     authority = serializers.StringRelatedField(read_only=True)
-    report_type = AuthorityIssueTypeSerializer(read_only=True)
+    report_type = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Report
         geo_field = "location"
-        id_field = False # we don't want to return id field in the response
         fields = ("location", 'authority', 'details', 'date_created', 'report_type', 'nearest_address', 
                     'state')
+
+class ReportCreateSerializer(gis_serializers.GeoFeatureModelSerializer):
+    class Meta:
+        model = Report
+        geo_field = "location"
+        fields = ("location", 'authority', 'details', 'date_created', 'report_type', 'nearest_address', 
+                    'state', 'sender_email', 'sender_name', 'sender_phone')
+
+    def create(self, validated_data):
+            return Report.objects.create(**validated_data)
