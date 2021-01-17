@@ -2,9 +2,15 @@ from django.contrib import admin
 from django.contrib.gis.admin import OSMGeoAdmin
 from .models import Authority, AuthorityIssueTypeGroup, AuthorityIssueType, BaseIssueTypeGroup, BaseIssueType
 
+from django.contrib.gis.db import models
+from django.forms.widgets import Textarea
+
 @admin.register(Authority)
-class AuthorityAdmin(OSMGeoAdmin):
+class AuthorityAdmin(admin.ModelAdmin):
     list_display = ('name', 'authority_type', 'address', 'phone_number', 'email', 'website_url')
+    formfield_overrides = {
+        models.PolygonField: {'widget': Textarea }
+    }
 
 @admin.register(AuthorityIssueTypeGroup)
 class AuthorityIssueGroupAdmin(admin.ModelAdmin):

@@ -1,173 +1,171 @@
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import render, get_object_or_404
 from django.contrib.gis.geos import Point
 
 from .models import Authority, AuthorityIssueType, AuthorityIssueTypeGroup, BaseIssueTypeGroup, BaseIssueType
 from .serializers import AuthoritySerializer, AuthorityIssueTypeGroupSerializer, AuthorityIssueTypeSerializer
+from .permissions import IsAuthorityAdmin
 
 
 # Create your views here.
-def AuthorityManagerLoginView(request):
-    # Render the login view for RMends authority management console
-    return 'Authority Manager Login View'
-
 class IssueTypeGroupView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request):
-        required_data = {
-            'latitude': request.data.get('latatude'),
-            'longitude': request.data.get('longitude')
-        }
-        for data in required_data:
-            if required_data[data] is None:
-                return Response({'detail': f'Missing required data \'{data}\''}, 
-                    status=status.HTTP_406_NOT_ACCEPTABLE)
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
 
-        pnt = Point(required_data["longitude"], required_data["latitude"])
+        if not latitude or not longitude:
+            return missing_requred_data_error("latitude" if not longitude else "longitude")
+
+        pnt = Point(longitude, latitude)
         issue_type_groups = AuthorityIssueTypeGroup.objects.filter(authority__report_range__contains=pnt)
-
+        
         serializer = AuthorityIssueTypeGroupSerializer(issue_type_groups, many=True)
+        return Response(serializer.data)
+
 
 class AuthorityIssueTypeGroupView(APIView):
-    def get(self, request):
-        authority_name = request.data.get('authority_name')
-        if authority_name is None:
-            return Response({'detial': f'Missing required data \'authority_name\''},
-                status=status.HTTP_406_NOT_ACCEPTABLE)
+    permission_classes = [IsAuthenticated, IsAuthorityAdmin]
+
+    def get(self, request, *args, **kwargs):
+        authority_id = kwargs.get('authority_id', '')
+        if not authority_id:
+            return missing_requred_data_error('authority_id')
         
         try:
-            authority = Authority.objects.get(name='Barren County Road Department')
+            authority = Authority.objects.get(id=authority_id)
         except Authority.DoesNotExist:
-            return Response({'detial': f'Authority {authority_name} does not exist'},
-                status=status.HTTP_404_NOT_FOUND)
+            return data_does_not_exist_error('Authority', authority_id)
+
+        self.check_object_permissions(request, authority)
 
         issue_groups = AuthorityIssueTypeGroup.objects.filter(authority=authority.id)
         serializer = AuthorityIssueTypeGroupSerializer(issue_groups, many=True)
-        
         return Response({'issue_groups': serializer.data})
-    
-    def delete(self, request):
-        '''Remove a issue type group from the authorities issue type groups'''
-        # Verify that all the required info is given
-        required_data = {
-            'authority_name': request.data.get('authority_name'), 
-            'group_name': request.data.get('group_name')
-        }
-        for data in required_data:
-            if required_data[data] is None:
-                return Response({'detail': f'Missing required data \'{data}\''},
-                    status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        # TODO: Verify user is an admin for the issue type group's authority, return an error if not
+class AuthorityIssueTypeGroupCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsAuthorityAdmin]
 
-        # Verify that the issue type group exist, return an error if not
-        try:
-            issue_group = AuthorityIssueTypeGroup.objects.get(name=required_data['group_name'], 
-                authority__name=required_data['authority_name'])
-        except AuthorityIssueTypeGroup.DoesNotExist:
-            return Response({'detail': 'The issue group you\'re trying to delete does not exist. \
-                Please try refreshing the page and if the group is still showing, contact R.Mend.'},
-                status=status.HTTP_404_NOT_FOUND)
-        
-        # Delete the issue type group
-        issue_group.delete()
-
-        # Return a successfull response
-        return Response({'success': f'Issue Type Group {issue_group.name} deleted successfully'})
-
-    def post(self, request):
+    def post(self, request, authority_id):
         '''Add a new copy of a issue type group to the authorites issue type groups'''
         # Verify that all the required info is given
-        required_data = {
-            'authority_name': request.data.get('authority_name'), 
-            'group_name': request.data.get('group_name')
-        }
-        for data in required_data:
-            if required_data[data] is None:
-                return Response({'detail': f'Missing required data \'{data}\''},
-                    status=status.HTTP_406_NOT_ACCEPTABLE)
+        group_name = request.data.get('group_name')
+        if not authority_id or not group_name:
+            return missing_requred_data_error('authority_id' if not authority_id else 'group_name')
 
-        # Get the requested authority to add a new group too
-        authority = Authority.objects.get(name=required_data['authority_name'])
+        # Get the requested authority to add a new group too or return error
+        try:
+            authority = Authority.objects.get(id=authority_id)
+        except Authority.DoesNotExist:
+            return not_authority_admin_error('Authority', authority_id)
 
-        # TODO: Verify user is an admin for the issue type group's authority, return an error if not
+        # Verify that the request user is an admin of the authority
+        self.check_object_permissions(request, authority)
 
         # Get the base issue type group to copy into the authorities issue type groups  
         try:
-            base_issue_group = BaseIssueTypeGroup.objects.get(name=required_data['group_name'])
+            base_issue_group = BaseIssueTypeGroup.objects.get(name=group_name)
         except BaseIssueTypeGroup.DoesNotExist:
-            return Response({'detail': 'The issue group you\'re trying to add is not an avalable option'},
-                status=status.HTTP_404_NOT_FOUND)
+            return data_does_not_exist_error('Issue Type Group', group_name)
 
         # Verify that the issue type group doesn't already exist, return an error if so
-        issue_group, created = AuthorityIssueTypeGroup.objects.get_or_create(authority=authority, 
-            name=required_data['group_name'])
+        issue_group, created = AuthorityIssueTypeGroup.objects.get_or_create(name=group_name, 
+            authority=authority)
         if not created:
-            return Response({'detail': f'Issue Type Group \'{issue_group.name}\' already exist'},
-                status=status.HTTP_406_NOT_ACCEPTABLE)
+            return data_already_exist_error('Issue Type Group', issue_group.name)
         
         # Return a successfull response
-        return Response({'success': f'Issue Group {new_issue_group.name} created successfully'})
+        return Response({'success': f'Issue Group {issue_group.name} created successfully'})
 
+class AuthorityIssueTypeGroupDeleteView(APIView):
+    permission_classes = [IsAuthenticated, IsAuthorityAdmin]
 
-class AuthorityIssueTypeView(APIView):
-    def delete(self, request):
-         # Verify that all the required info is given
-        issue_type_name = request.data.get('issue_type_name')
-        if issue_type_name is None:
-            return Response({'detail': f'Missing required data \'issue_type_name\''},
-                status=status.HTTP_406_NOT_ACCEPTABLE)
-
-        # TODO: Verify user is an admin for the issue type group's authority, return an error if not
-
-        # Verify that the issue type exist, return an error if not
+    def delete(self, request, authority_id):
+        '''Remove a issue type group from the authorities issue type groups'''
+        group_name = request.data.get('group_name')
+        if not authority_id or not group_name:
+            return missing_requred_data_error('authority_id' if not authority_id else 'group_name')
+        
         try:
-            issue_type = AuthorityIssueType.objects.get(name=issue_type_name)
-        except AuthorityIssueType.DoesNotExist:
-            return Response({'detail': f'Issue Type {issue_type_name} does not exist'},
-                status=status.HTTP_404_NOT_FOUND)
+            issue_group = AuthorityIssueTypeGroup.objects.get(name=group_name, authority__id=authority_id)
+        except AuthorityIssueTypeGroup.DoesNotExist:
+            return data_does_not_exist_error('Authority', authority_id)
+        
+        self.check_object_permissions(request, issue_group)
+        
+        issue_group.delete()
+        return Response({'success': f'Issue Type Group {issue_group.name} deleted successfully'})
 
-        # Delete the issue type
-        issue_type.delete()
-
-        # Return a successfull response
-        return Response({'success': f'Issue Type {issue_type.name} deleted successfully'})
+class AuthorityIssueTypeCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsAuthorityAdmin]
     
-    def post(self, request):
+    def post(self, request, authority_id):
         # Verify that all the required info is given
-        required_data = {
-            'issue_group': request.data.get('issue_group'), 
-            'type_name': request.data.get('type_name')
-        }
-        for data in required_data:
-            if required_data[data] is None:
-                return Response({'detail': f'Missing required data \'{data}\''},
-                    status=status.HTTP_406_NOT_ACCEPTABLE)
+        issue_group_name = request.data.get('issue_group_name')
+        type_name = request.data.get('type_name')
+        if not issue_group_name or not type_name:
+            return missing_requred_data_error('issue_group' if not issue_group_name else 'type_name')
 
         # Get the requested issue type group to add a new issue type to
         try:
-            issue_group = AuthorityIssueTypeGroup.objects.get(name=required_data['issue_group'])
+            issue_group = AuthorityIssueTypeGroup.objects.get(name=issue_group_name, authority__id=authority_id)
         except AuthorityIssueTypeGroup.DoesNotExist:
-            return Response({'detail': f'Issue Type Group {required_data["issue_group"]} does not exist \
-                in your authority'}, status=status.HTTP_404_NOT_FOUND)
+            return data_does_not_exist_error('Issue Type Group', issue_group_name)
 
-        # TODO: Verify user is an admin for the issue type group's authority, return an error if not
+        # Verify that user has delete access to this groups authority
+        self.check_object_permissions(request, issue_group)
 
         # Get the base issue type group to copy into the authorities issue type groups  
         try:
-            base_issue_type = BaseIssueType.objects.get(name=required_data['type_name'])
+            base_issue_type = BaseIssueType.objects.get(name=type_name, issue_group__name=issue_group_name)
         except BaseIssueType.DoesNotExist:
-            return Response({'detail': 'The issue type you\'re trying to add in not an option'},
-                status=status.HTTP_404_NOT_FOUND)
+            return data_does_not_exist_error('Issue Type', type_name)
 
         # Verify that the issue type doesn't already exist, return an error if so
-        issue_type, created = AuthorityIssueType.objects.get_or_create(issue_group=issue_group, name=base_issue_type.name)
+        issue_type, created = AuthorityIssueType.objects.get_or_create(issue_group=issue_group, 
+            name=base_issue_type.name)
         if not created:
-            return Response({'detail': f'Issue Type \'{issue_type.name}\' already exist'},
-                status=status.HTTP_406_NOT_ACCEPTABLE)
+            return data_already_exist_error('Issue Type', issue_type.name)
 
         #  Add the new issue group to the authority
         return Response({'success': f'Issue Type {issue_type.name} created successfully'})
 
+class AuthorityIssueTypeDeleteView(APIView):
+    permission_classes = [IsAuthenticated, IsAuthorityAdmin]
+
+    def delete(self, request, authority_id):
+         # Verify that all the required info is given
+        type_name = request.data.get('type_name')
+        if type_name is None:
+            return missing_requred_data_error('type_name')
+
+        # Verify that the issue type exist, return an error if not
+        try:
+            issue_type = AuthorityIssueType.objects.get(name=type_name, issue_group__authority=authority_id)
+        except AuthorityIssueType.DoesNotExist:
+            return data_does_not_exist_error('Issue Type', type_name)
+
+        # Verify that user has delete access to this groups authority
+        self.check_object_permissions(request, issue_type.issue_group)
+
+        # Delete the issue type and return a successful response
+        issue_type.delete()
+        return Response({'success': f'Issue Type {issue_type.name} deleted successfully'})
     
+
+# Error helper functions
+def missing_requred_data_error(data):
+    return Response({'detial': f'Missing required data {data}'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+def data_does_not_exist_error(data_type, data):
+    return Response({'detial': f'{data_type} {data} does not exist'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+def data_already_exist_error(data_type, data):
+    return Response({'detail': f'{data_type} {data} already exist'},
+                status=status.HTTP_406_NOT_ACCEPTABLE)
