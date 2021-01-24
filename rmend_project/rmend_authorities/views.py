@@ -14,18 +14,16 @@ from .permissions import IsAuthorityAdmin
 class IssueTypeGroupView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request):
-        latitude = request.data.get('latitude')
-        longitude = request.data.get('longitude')
+    def post(self, request):
+        location = request.data.get('location')
+        if not location:
+            return missing_requred_data_error('location')
 
-        if not latitude or not longitude:
-            return missing_requred_data_error("latitude" if not longitude else "longitude")
-
-        pnt = Point(longitude, latitude)
-        issue_type_groups = AuthorityIssueTypeGroup.objects.filter(authority__report_range__contains=pnt)
+        pnt = Point(location[0], location[1])
+        issue_type_groups = AuthorityIssueTypeGroup.objects.filter(authority__report_range__touches=pnt)
         
         serializer = AuthorityIssueTypeGroupSerializer(issue_type_groups, many=True)
-        return Response(serializer.data)
+        return Response({'issue_groups': serializer.data})
 
 
 class AuthorityIssueTypeGroupView(APIView):
