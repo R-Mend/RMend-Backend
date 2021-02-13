@@ -23,7 +23,7 @@ class Authority(models.Model):
             return False
 
     def update_name(self, name):
-        if is_name_taken(name):
+        if self.is_name_taken(name):
             return
         self.name = name
         self.save()

@@ -5,9 +5,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from django.contrib.auth import authenticate
+from django.core.exceptions import ObjectDoesNotExist
 
-from .serializers import UserSerializer
+from .serializers import UserSerializer, EmployeeRequestSerializer
 from .models import User
+from rmend_authorities.models import Authority
 
 
 # Create your views here.

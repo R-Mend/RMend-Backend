@@ -49,7 +49,6 @@ class User(AbstractUser):
         return re.sub('[^a-zA-Z]', '', username)
 
     def update_username(self, username):
-        check_username_not_taken(user=self, username=username)
         self.username = username
         self.save()
 

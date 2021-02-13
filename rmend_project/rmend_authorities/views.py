@@ -66,7 +66,7 @@ class AuthorityIssueTypeGroupCreateView(APIView):
 
         # Get the base issue type group to copy into the authorities issue type groups  
         try:
-            base_issue_group = BaseIssueTypeGroup.objects.get(name=group_name)
+            BaseIssueTypeGroup.objects.get(name=group_name)
         except BaseIssueTypeGroup.DoesNotExist:
             return data_does_not_exist_error('Issue Type Group', group_name)
 
