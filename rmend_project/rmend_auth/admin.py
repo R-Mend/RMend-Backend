@@ -6,6 +6,8 @@ from .models import User
 
 @admin.register(User)
 class UserAdmin(UserAdmin):
+    """Admin console reprresentation fo the custom user model"""
+
     model = User
     list_display = ('email', 'is_staff', 'is_active')
     list_filter = ('email', 'is_staff', 'is_active')
@@ -23,4 +25,5 @@ class UserAdmin(UserAdmin):
     ordering = ('email',)
 
     def has_add_permission(self, request, obj=None):
+        """Tells the admin that this model can't be added to from the console"""
         return False
