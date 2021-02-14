@@ -35,7 +35,7 @@ class ReportCreateView(APIView):
 
     def post(self, request):
         # Verify that the required data is given
-        required_data = ['report_type', 'location', 'sender_email', 'sender_name']
+        required_data = set(['report_type', 'location', 'sender_email', 'sender_name'])
         for key in required_data:
             if key not in request.data or not request.data[key]:
                 return missing_requred_data_error(key)
@@ -57,7 +57,7 @@ class ReportCreateView(APIView):
         # Save the report if the given data is valid
         serializer = ReportCreateSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            report_saved = serializer.save()
+            serializer.save()
 
         # Return a successfull responce message
         return Response({'success': f'Report {issue_type.name} created successfully'})
@@ -92,7 +92,7 @@ class AdminReportUpdateView(APIView):
         try:
             report = Report.objects.get(id=report_id)
         except Report.DoesNotExist:
-            return data_does_not_exist_error(report.id)
+            return data_does_not_exist_error('Report', report.id)
 
         # Verify that the user is an admin of the reports authority
         self.check_object_permissions(request, report)

@@ -40,14 +40,3 @@ class AuthorityIssueTypeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return AuthorityIssueType.objects.create(**validated_data)
-
-class AuthorityIssueTypeSerializer(serializers.ModelSerializer):
-    issue_group = serializers.StringRelatedField(read_only=True)
-    class Meta:
-        model = AuthorityIssueType
-        fields = ('name', 'issue_group')
-
-    def create(self, validated_data):
-        return AuthorityIssueType.objects.create(**validated_data)
-
-        
