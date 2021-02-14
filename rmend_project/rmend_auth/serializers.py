@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import User
+from .models import User, EmployeeRequest
+from rmend_authorities.models import Authority
+from rmend_authorities.serializers import AuthorityModelSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,3 +22,11 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(email=validated_data['email'], password=validated_data['password'], 
             username=validated_data['username'])
         return user
+
+class EmployeeRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeRequest
+        fields = ('id', 'authority', 'user')
+
+    def create(self, validated_data):
+        return EmployeeRequest.objects.create(**validated_data)

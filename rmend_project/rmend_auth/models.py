@@ -18,7 +18,7 @@ class User(AbstractUser):
     auth_code = models.CharField(max_length=100, default='', blank=True)
 
     authority = models.ForeignKey(Authority, on_delete=models.SET_NULL, null=True, blank=True,
-         related_name='admin_users')
+         related_name='admin_users', editable=True)
     is_admin = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False,)
     is_deleted = models.BooleanField(_('is deleted'), default=False,)
@@ -49,7 +49,6 @@ class User(AbstractUser):
         return re.sub('[^a-zA-Z]', '', username)
 
     def update_username(self, username):
-        check_username_not_taken(user=self, username=username)
         self.username = username
         self.save()
 
@@ -57,3 +56,7 @@ class User(AbstractUser):
         self.set_password(password)
         self._reset_auth_token()
         self.save()
+
+class EmployeeRequest(models.Model):
+    authority = models.ForeignKey(Authority, related_name='employee_requests', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='employee_requests', on_delete=models.CASCADE)

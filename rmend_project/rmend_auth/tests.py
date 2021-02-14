@@ -3,8 +3,10 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
+from django.contrib.gis.geos import GEOSGeometry
 
-from .models import User
+from .models import User, EmployeeRequest
+from rmend_authorities.models import Authority
 
 
 # Create your tests here.
@@ -38,7 +40,6 @@ class UserTest(APITestCase):
         self.assertEqual(response.data['username'], data['username'])
         self.assertEqual(response.data['phone_number'], data['phone_number'])
         self.assertEqual(response.data['auth_code'], data['auth_code'])
-
 
 
 class UserCreateTest(APITestCase):
@@ -207,3 +208,97 @@ class UserAuthenticationTest(APITestCase):
         request = self.client.post(self.logout_url)
         self.assertEqual(request.status_code, status.HTTP_200_OK)
         self.assertEqual(Token.objects.count(), 0)
+
+
+class EmployeeRequestTests(APITestCase):
+    def setUp(self):
+        report_area = GEOSGeometry('POLYGON ((-86.62170408951287 36.57142381906437, -86.19049071065865 36.56039392897386, -85.92956541772644 36.92135192347484, -86.20697020284396 37.08804885508249, -86.5530395387336 37.09681224924606, -86.82495115978935 36.97183824650084, -86.77551268323343 36.69485093715447, -86.62170408951287 36.57142381906437))')
+        self.test_authority = Authority.objects.create(name='Test Authority', authority_type='test', 
+            address='testaddress', phone_number='1234567890', email='test@email.com', website_url='', 
+            report_range=report_area)
+
+        self.test_user = User.objects.create_user('test@example.com', 'testpassword', 'testname')
+        self.token = Token.objects.create(user=self.test_user)
+
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
+        self.create_url = '/api/users/employee/request'
+
+    def test_create_employee_request(self):
+        data = {'authority_auth_code': self.test_authority.auth_code}
+        request = self.client.post(self.create_url, data=data, format='json')
+        self.assertEqual(request.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(EmployeeRequest.objects.count(), 1)
+
+    def test_create_duplicate_employee_request(self):
+        EmployeeRequest.objects.create(authority=self.test_authority, user=self.test_user)
+        data = {'authority_auth_code': self.test_authority.auth_code}
+        request = self.client.post(self.create_url, data=data, format='json')
+        self.assertEqual(request.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(EmployeeRequest.objects.count(), 1)
+
+
+class AdminDeleteEmployeeRequestTests(APITestCase):
+    def setUp(self):
+        report_area = GEOSGeometry('POLYGON ((-86.62170408951287 36.57142381906437, -86.19049071065865 36.56039392897386, -85.92956541772644 36.92135192347484, -86.20697020284396 37.08804885508249, -86.5530395387336 37.09681224924606, -86.82495115978935 36.97183824650084, -86.77551268323343 36.69485093715447, -86.62170408951287 36.57142381906437))')
+        self.test_authority = Authority.objects.create(name='Test Authority', authority_type='test', 
+            address='testaddress', phone_number='1234567890', email='test@email.com', website_url='', 
+            report_range=report_area)
+
+        self.test_user = User.objects.create_user('test@example.com', 'testpassword', 'testname')
+        self.token = Token.objects.create(user=self.test_user)
+        self.test_user.authority = self.test_authority
+        self.test_user.save()
+
+        self.test_user2 = User.objects.create_user('test2@example.com', 'test2password', 'test2name')
+
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
+    def test_delete_employee_request(self):
+        employee_request = EmployeeRequest.objects.create(authority=self.test_authority, user=self.test_user)
+        request = self.client.delete(
+            f'/api/authority/{self.test_authority.id}/employee/requests/{employee_request.id}/delete', 
+            data={'is_accepted': False}, 
+            format='json'
+        )
+        self.assertEqual(request.status_code, status.HTTP_200_OK)
+        self.assertEqual(EmployeeRequest.objects.count(), 0)
+
+    def test_delete_accepted_employee_request(self):
+        employee_request = EmployeeRequest.objects.create(authority=self.test_authority, user=self.test_user2)
+        request = self.client.delete(
+            f'/api/authority/{self.test_authority.id}/employee/requests/{employee_request.id}/delete', 
+            data={'is_accepted': True}, 
+            format='json'
+        )
+        self.assertEqual(request.status_code, status.HTTP_200_OK)
+        self.assertEqual(EmployeeRequest.objects.count(), 0)
+        self.assertEqual(self.test_user.authority, self.test_authority)
+
+
+class AdminEmployeeRequestPermissionTests(APITestCase):
+    def setUp(self):
+        report_area = GEOSGeometry('POLYGON ((-86.62170408951287 36.57142381906437, -86.19049071065865 36.56039392897386, -85.92956541772644 36.92135192347484, -86.20697020284396 37.08804885508249, -86.5530395387336 37.09681224924606, -86.82495115978935 36.97183824650084, -86.77551268323343 36.69485093715447, -86.62170408951287 36.57142381906437))')
+        self.test_authority = Authority.objects.create(name='Test Authority', authority_type='test', 
+            address='testaddress', phone_number='1234567890', email='test@email.com', website_url='', 
+            report_range=report_area)
+
+        self.test_user = User.objects.create_user('test@example.com', 'testpassword', 'testname')
+        self.token = Token.objects.create(user=self.test_user)
+        
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
+        self.create_url = '/api/users/employee/request'
+
+    def test_delete_employee_request_without_permission(self):
+        employee_request = EmployeeRequest.objects.create(authority=self.test_authority, user=self.test_user)
+        request = self.client.delete(
+            f'/api/authority/{self.test_authority.id}/employee/requests/{employee_request.id}/delete', 
+            data={'is_accepted': False}, 
+            format='json'
+        )
+        self.assertEqual(request.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(EmployeeRequest.objects.count(), 1)

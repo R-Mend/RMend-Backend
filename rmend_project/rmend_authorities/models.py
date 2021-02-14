@@ -1,6 +1,9 @@
 from django.contrib.gis.db import models
 from django.utils.translation import gettext_lazy as _
+import uuid
 
+def get_readable_uid():
+    return str(uuid.uuid4())[0:8]
 
 class Authority(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -10,6 +13,8 @@ class Authority(models.Model):
     phone_number = models.CharField(max_length=15)
     email = models.EmailField(_('email address'))
     website_url = models.CharField(max_length=250, blank=True)
+    auth_code = models.CharField(default=get_readable_uid, max_length=8, 
+      unique=True, null=False, blank=False)
 
     def __str__(self):
         return self.name
@@ -23,7 +28,7 @@ class Authority(models.Model):
             return False
 
     def update_name(self, name):
-        if is_name_taken(name):
+        if self.is_name_taken(name):
             return
         self.name = name
         self.save()
@@ -48,7 +53,8 @@ class Authority(models.Model):
         self.website_url = website_url
 
 class AuthorityIssueTypeGroup(models.Model):
-    authority = models.ForeignKey(Authority, on_delete=models.CASCADE, related_name='issue_groups')
+    authority = models.ForeignKey(Authority, on_delete=models.CASCADE, 
+      related_name='issue_groups')
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
@@ -63,7 +69,8 @@ class AuthorityIssueTypeGroup(models.Model):
             return False
 
 class AuthorityIssueType(models.Model):
-    issue_group = models.ForeignKey(AuthorityIssueTypeGroup, related_name='issue_types', on_delete=models.CASCADE)
+    issue_group = models.ForeignKey(AuthorityIssueTypeGroup, 
+      related_name='issue_types', on_delete=models.CASCADE)
     name = models.CharField(max_length=100, unique=True)
     
     def __str__(self):
@@ -92,7 +99,8 @@ class BaseIssueTypeGroup(models.Model):
             return False
     
 class BaseIssueType(models.Model):
-    issue_group = models.ForeignKey(BaseIssueTypeGroup, related_name='issue_types', on_delete=models.CASCADE)
+    issue_group = models.ForeignKey(BaseIssueTypeGroup, 
+      related_name='issue_types', on_delete=models.CASCADE)
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
