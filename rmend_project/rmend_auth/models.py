@@ -55,12 +55,8 @@ class User(AbstractUser):
     def update_password(self, password):
         self.set_password(password)
         self._reset_auth_token()
-<<<<<<< HEAD
         self.save()
 
 class EmployeeRequest(models.Model):
     authority = models.ForeignKey(Authority, related_name='employee_requests', on_delete=models.CASCADE)
     user = models.ForeignKey(User, related_name='employee_requests', on_delete=models.CASCADE)
-=======
-        self.save()
->>>>>>> 95a3d7ed304f4e88468f593e3f0492c05843adea
