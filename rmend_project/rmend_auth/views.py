@@ -8,8 +8,12 @@ from django.contrib.auth import authenticate
 from django.core.exceptions import ObjectDoesNotExist
 
 from .serializers import UserSerializer, EmployeeRequestSerializer
+<<<<<<< HEAD
 from .models import User, EmployeeRequest
 from .permissions import IsAuthorityAdmin
+=======
+from .models import User
+>>>>>>> 95a3d7ed304f4e88468f593e3f0492c05843adea
 from rmend_authorities.models import Authority
 
 

@@ -59,14 +59,14 @@ class AuthorityIssueTypeGroupCreateView(APIView):
         try:
             authority = Authority.objects.get(id=authority_id)
         except Authority.DoesNotExist:
-            return not_authority_admin_error('Authority', authority_id)
+            return data_does_not_exist_error('Authority', authority_id)
 
         # Verify that the request user is an admin of the authority
         self.check_object_permissions(request, authority)
 
         # Get the base issue type group to copy into the authorities issue type groups  
         try:
-            base_issue_group = BaseIssueTypeGroup.objects.get(name=group_name)
+            BaseIssueTypeGroup.objects.get(name=group_name)
         except BaseIssueTypeGroup.DoesNotExist:
             return data_does_not_exist_error('Issue Type Group', group_name)
 
