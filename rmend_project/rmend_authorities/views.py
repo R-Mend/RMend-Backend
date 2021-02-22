@@ -6,11 +6,10 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.gis.geos import Point
 
 from .models import Authority, AuthorityIssueType, AuthorityIssueTypeGroup, BaseIssueTypeGroup, BaseIssueType
-from .serializers import AuthoritySerializer, AuthorityIssueTypeGroupSerializer, AuthorityIssueTypeSerializer
+from .serializers import AuthoritySerializer, AuthorityIssueTypeGroupSerializer
 from .permissions import IsAuthorityAdmin
 
 
-# Create your views here.
 class IssueTypeGroupView(APIView):
     permission_classes = [AllowAny]
 
@@ -49,7 +48,7 @@ class AuthorityIssueTypeGroupCreateView(APIView):
     permission_classes = [IsAuthenticated, IsAuthorityAdmin]
 
     def post(self, request, authority_id):
-        '''Add a new copy of a issue type group to the authorites issue type groups'''
+        """Add a new copy of a base issue type group to the authorites issue type groups"""
         # Verify that all the required info is given
         group_name = request.data.get('group_name')
         if not authority_id or not group_name:
