@@ -2,27 +2,29 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+
 from django.contrib.gis.measure import D # Distance
 from django.contrib.gis.geos import Point
 
-from .models import Report
 from rmend_authorities.models import Authority, AuthorityIssueType
 from .serializers import AdminReportSeralizer, ReportGetSeralizer, ReportCreateSerializer
 from .permissions import IsAuthorityAdmin
+from .models import Report
 
 
-# Create your views here.
 class ReportView(APIView):
+    """API view for getting reports based on a given location"""
     permission_classes = [AllowAny]
 
     def get(self, request):
+        """Gets a list of report 10 miles from the given location"""
         # Verify the required data is given
         latitude = request.query_params.get('latitude')
         longitude = request.query_params.get('longitude')
         if not latitude or not longitude:
             return missing_requred_data_error('latitude' if not latitude else 'longitude')
 
-        # Get all reports from 5 miles from the users location 
+        # Get all reports from 5 miles from the users location
         pnt = Point(float(longitude), float(latitude))
         reports = Report.objects.filter(location__distance_lte=(pnt, D(mi=10)))
 
@@ -31,15 +33,18 @@ class ReportView(APIView):
         return Response(dict(serializer.data))
 
 class ReportCreateView(APIView):
-    permission_classes = [AllowAny] # TODO: Determin if report creation will required authenticatied users or not 
+    """API view for creating reports"""
+    # TODO: Determin if report creation will required authenticatied users or not
+    permission_classes = [AllowAny]
 
     def post(self, request):
+        """Creates a new report with the given report information"""
         # Verify that the required data is given
         required_data = set(['report_type', 'location', 'sender_email', 'sender_name'])
         for key in required_data:
             if key not in request.data or not request.data[key]:
                 return missing_requred_data_error(key)
-            
+
         # Verify that the issue group and thus authority exist
         try:
             issue_type = AuthorityIssueType.objects.get(id=request.data['report_type'])
@@ -63,9 +68,11 @@ class ReportCreateView(APIView):
         return Response({'success': f'Report {issue_type.name} created successfully'})
 
 class AdminReportView(APIView):
+    """API view for admin users to get admin level info on reports"""
     permission_classes = [IsAuthenticated, IsAuthorityAdmin]
 
     def get(self, request, *args, **kwargs):
+        """Gets a list of reports with an authority of the admin user"""
         # Verify the required data is given
         authority_id = kwargs.get('authority_id')
         if not authority_id:
@@ -81,9 +88,11 @@ class AdminReportView(APIView):
         return Response(serializer.data)
 
 class AdminReportUpdateView(APIView):
+    """API view for admins to update reports"""
     permission_classes = [IsAuthenticated, IsAuthorityAdmin]
 
     def put(self, request, authority_id, report_id):
+        """Updates the requested report with the given information"""
         # Verify that the required data is given
         if not authority_id or not report_id:
             return missing_requred_data_error('authority_id' if not authority_id else 'report_id')
@@ -106,9 +115,11 @@ class AdminReportUpdateView(APIView):
         return Response({'success': f'Report {report_saved.report_type.name} updated successfully'})
 
 class AdminReportDeleteView(APIView):
+    """API view for admin to delete reports"""
     permission_classes = [IsAuthenticated, IsAuthorityAdmin]
 
     def delete(self, request, authority_id, report_id):
+        """Deltes the requested report if the users is an admin of the reports authority"""
         # Verify that the required data is given
         if not authority_id or not report_id:
             return missing_requred_data_error('authority_id' if not authority_id else 'report_id')
@@ -129,16 +140,21 @@ class AdminReportDeleteView(APIView):
 
 # Error helper functions
 def out_of_range_error():
-    return Response({'detial': 'Sorry. The report you\'re trying to create is out of R.Mends report range'},
+    """Returns an response error for when a reports location is out of range"""
+    return Response(
+        {'detial': 'Sorry. The report you\'re trying to create is out of R.Mends report range'},
         status=status.HTTP_400_BAD_REQUEST)
 
 def missing_requred_data_error(data):
+    """Returns a response error for when required data for a model is missing"""
     return Response({'detial': f'Missing required data {data}'},
                 status=status.HTTP_400_BAD_REQUEST)
 
 def data_does_not_exist_error(data_type, data):
+    """Returns a response error for when requested data does not exist"""
     return Response({'detial': f'{data_type} {data} does not exist'},
                 status=status.HTTP_400_BAD_REQUEST)
 
 def field_provided_is_not_editable_error(data):
+    """Return an response error for when trying to update a field that is non-editable"""
     return Response({'detial': f'{data} is not editable'}, status=status.HTTP_400_BAD_REQUEST)
