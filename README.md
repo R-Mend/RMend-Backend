@@ -1,15 +1,15 @@
 # RMend-Backend
-> RMend backend it the manager for sending data to both the RMend website and mobile app.
+> RMend backend is the manager for sending data to both the RMend website and mobile app.
 
-RMend-Backend is the backend API for the RMend SaaS. Its goal is to be able to manage reports for multiple county road departments/goverment counsels that come in from citizens and employess of the county.
+RMend-Backend is the backend API for the RMend SaaS. Its goal is to be able to manage reports for multiple county road departments/government counsels that come in from citizens and employees of the county.
 
 
 ## Usage example
 
-A typical example for how the RMend backend works involves...
-1. Getting a requrest from either the mobile or web application for local reports
-2. Searching the database using a geospacial query with the given lattidude and longittude
-3. Respond to the request with the reports locaed 5 miles away from the requested user.
+A typical example of how the RMend backend works involves...
+1. Getting a request from either the mobile or web application for local reports
+2. Searching the database using a geospatial query with the given latitude and longitude
+3. Respond to the request with the reports located 5 miles away from the requested user.
 
 ## Development setup
 
