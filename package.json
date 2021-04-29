@@ -1,0 +1,11 @@
+{
+  "name": "node-report-manager",
+  "version": "1.0.0",
+  "description": "node api for managing reports",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tanner W. York",
+  "license": "ISC"
+}
