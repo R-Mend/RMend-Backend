@@ -6,7 +6,7 @@
 
 Node Report Manager allows you to create and manage reports for any of your need. The idea is to give you a base for create sytems that allow the creation of users and have them create reports to then send to a main repository you can then review and manage.
 
-See the [documentation]() for more info.
+See the [documentation](https://tanneryork.github.io/Node-Report-Manager/) for more info.
 
 ## Features
 
