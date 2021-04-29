@@ -2,7 +2,7 @@
 
 ## Install MongoDB
 
-Install mongodb following their [documentation](https://docs.mongodb.com/manual/administration/install-community/) and verify that mongo was installed successfully.
+Install MongoDB following their [documentation](https://docs.mongodb.com/manual/administration/install-community/) and verify that mongo was installed successfully.
 
 ```bash
 mongo --version
@@ -45,16 +45,14 @@ npm install
 
 ## Serving Routes
 
-Test that all the routes are working properly with `npm run test`. The test should be succesfful but you may need to run `npm start` to initialize the mongodb.
+Test that all the routes are working properly with `npm run test`. The test should be successful but you may need to run `npm start` to initialize the MongoDB.
 
 ```bash
 npm run test
 ```
 
-Then, run the local server with `npm start`. You can then make request to `http://localhost:3000`.
+Then, run the local server with `npm start`. You can then make requests to `http://localhost:3000`.
 
 ```bash
 npm start
 ```
-
-

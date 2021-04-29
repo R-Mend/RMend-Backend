@@ -36,13 +36,13 @@ Creates a new report to the store. Anyone can access this route.
 
 | Name        | Type   | In   | Description  |
 | ----------- | -----  | ---  | ------------ |
-| title       | string | body | indicator for the reports general purpose |
-| detials     | string | body | a detailed description of the report |
+| title       | string | body | indicator for the reports general-purpose |
+| details     | string | body | a detailed description of the report |
 
 
 ## Update a report
 
-Updates a reports parameters. Only authenticated users can access this route and only the reports creator can update it.
+Updates a report's fields. Only authenticated users can access this route and only the reports creator can update it.
 
 `PUT` /reports/:reportId
 
@@ -51,8 +51,8 @@ Updates a reports parameters. Only authenticated users can access this route and
 | Name        | Type   | In   | Description  |
 | ----------- | -----  | ---  | ------------ |
 | reportId    | string | url  | unique identifier for the report |
-| title       | string | body | indicator for the reports general purpose |
-| detials     | string | body | a detailed description of the report |
+| title       | string | body | indicator for the reports general-purpose |
+| details     | string | body | a detailed description of the report |
 
 
 ## Delete a single report

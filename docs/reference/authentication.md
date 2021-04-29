@@ -4,7 +4,7 @@
 
 ## Create a user
 
-Creates a new user with username and password. Anyone can call this route, however, if they they use an email already connected to a current user it will fail.
+Creates a new user with a username and password. Anyone can call this route, however, if they use an email already connected to a current user it will fail.
 
 `POST` /sign-up
 
@@ -14,11 +14,11 @@ Creates a new user with username and password. Anyone can call this route, howev
 | ----------- | -----  | ---  | ------------ |
 | email       | string | body | users email in the format of email@example.com |
 | password    | string | body | secure password that will be encrypted |
-| username    | string | body | users idetification `First Last` format recomended |
+| username    | string | body | users identification `First Last` format recommended |
 
 ## Login a user
 
-Grants access to routes that require an authenticated user to use. Any signed in user can acces this route. Saves a `jwt token` to verify users identity untill is expires or the user logs out.
+Grants access to routes that require an authenticated user to use. Any signed-in user can access this route. Saves a `jwt token` to verify users' identity until it expires or the user logs out.
 
 `GET` /login
 
@@ -28,11 +28,11 @@ Grants access to routes that require an authenticated user to use. Any signed in
 | ----------- | -----  | ---  | ------------ |
 | email       | string | body | users email in the format of email@example.com |
 | password    | string | body | secure password that will be encrypted |
-| username    | string | body | users idetification |
+| username    | string | body | users identification |
 
 ## Logout a user
 
-Disconnects the current user by deactivating the jwt token. Any signed in user can access this route.
+Disconnects the current user by deactivating the jwt token. Any signed-in user can access this route.
 
 `GET` /logout
 
@@ -41,6 +41,3 @@ Disconnects the current user by deactivating the jwt token. Any signed in user c
 | Name        | Type   | In   | Description  |
 | ----------- | -----  | ---  | ------------ |
 | none        |        |      |              |
-
-
-
