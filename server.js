@@ -20,10 +20,23 @@ app.use(expressValidator());
 // Cookie Parser
 app.use(cookieParser());
 
+// Auth Checker
+var checkAuth = (req, res, next) => {
+  console.log("Checking authentication");
+  if (typeof req.cookies.nToken === "undefined" || req.cookies.nToken === null) {
+    req.user = null;
+  } else {
+    var token = req.cookies.nToken;
+    var decodedToken = jwt.decode(token, { complete: true }) || {};
+    req.user = decodedToken.payload;
+  }
+  res.locals.currentUser = req.user;
+  next();
+};
+app.use(checkAuth);
+
 // Setup Controllers
-app.get('/', (req, res) => {
-  res.send("Loaded API Index");
-});
+require('./controllers/auth.js')(app);
 
 // Listen to Port
 app.listen(process.env.PORT, () => {
