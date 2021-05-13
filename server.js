@@ -30,17 +30,19 @@ var checkAuth = (req, res, next) => {
     var decodedToken = jwt.decode(token, { complete: true }) || {};
     req.user = decodedToken.payload;
   }
-  res.locals.currentUser = req.user;
   next();
 };
 app.use(checkAuth);
 
 // Setup Controllers
 require('./controllers/auth.js')(app);
+require('./controllers/reports.js')(app);
 
 // Listen to Port
-app.listen(process.env.PORT, () => {
+if(!module.parent){
+  app.listen(process.env.PORT, () => {
     console.log(`Report Manager listening on http://localhost:${[process.env.PORT]}`)
-});
+  });
+}
 
 module.exports = app;

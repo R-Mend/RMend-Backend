@@ -7,6 +7,7 @@ const UserSchema = new Schema({
   updatedAt: { type: Date },
   password: { type: String, select: false},
   username: { type: String, required: true },
+  reports : [{ type: Schema.Types.ObjectId, ref: "Report" }]
 },
   {timestamps: {createdAt: 'created_at'}}
 );
