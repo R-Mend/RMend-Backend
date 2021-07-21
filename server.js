@@ -1,6 +1,5 @@
 const dotenv = require('dotenv');
 const express = require('express');
-const bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
 var cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
@@ -13,8 +12,8 @@ require('./data/report-db');
 const app = express();
 
 // Setup Body Parser and Express Validator
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(expressValidator());
 
 // Cookie Parser

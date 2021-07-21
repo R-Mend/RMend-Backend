@@ -1,11 +1,12 @@
 const chai = require("chai");
 const chaiHttp = require("chai-http");
-const server = require("../server");
-const should = chai.should();
+const app = require("../server");
+
+chai.should();
 chai.use(chaiHttp);
 
 // Agent that will keep track of our cookies
-const agent = chai.request.agent(server);
+const agent = chai.request.agent(app);
 
 const User = require("../models/User.js");
 
@@ -15,19 +16,21 @@ describe("User", function() {
   });
 
   it("should not be able to login if they have not registered", function(done) {
-    agent.post("/login", { email: "wrong@wrong.com", password: "nope" }).end(function(err, res) {
-      res.status.should.be.equal(401);
-      done();
+    agent.post("/login")
+      .set('content-type', 'application/json')
+      .send({ email: "wrong@wrong.com", password: "nope" })
+      .end(function(err, res) {
+        res.status.should.be.equal(401);
+        done();
     });
 
     // signup
     it("should be able to signup", function(done) {
-      User.findOneAndRemove({ username: "testone" }, function() {
+      User.findOneAndRemove({ email: "test@email.com" }, function() {
         agent
           .post("/sign-up")
-          .send({ username: "testone", password: "password" })
+          .send({ username: 'user', email: "test@email.com", password: "password" })
           .end(function(err, res) {
-            console.log(res.body);
             res.should.have.status(200);
             agent.should.have.cookie("nToken");
             done();
@@ -39,7 +42,7 @@ describe("User", function() {
     it("should be able to login", function(done) {
       agent
         .post("/login")
-        .send({ username: "testone", password: "password" })
+        .send({ email: "test@email.com", password: "password" })
         .end(function(err, res) {
           res.should.have.status(200);
           agent.should.have.cookie("nToken");
