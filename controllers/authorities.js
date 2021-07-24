@@ -81,7 +81,28 @@ module.exports = function (app) {
         return res.status(200).send({ message: "User has been accepted into the authority." });
     });
 
-    app.get("/authority/:userId", async (req, res) => {
+    app.get("/authority/users", async (req, res) => {
+        // Veirfy user is logged in
+        const user = req.user;
+        if (!user) {
+            return res.status(401).send({ message: "You need to be logged in to access this route." });
+        }
+
+        // Verify that user is a part of an authority and is an admin
+        const authority = user.authority;
+        if (!authority || user.access_level != "admin") {
+            // Send a failed response if not found
+            return res.status(401).send({ message: "Access denied. You do not enough access to this authority" });
+        }
+
+        // Get authority's users
+        const users = await User.find({ authority: authority._id });
+
+        // Return a successful response
+        return res.status(200).send({ users });
+    });
+
+    app.get("/authority/users/:userId", async (req, res) => {
         // Get authority's name from url params
         const { userId } = req.params;
 
@@ -113,7 +134,7 @@ module.exports = function (app) {
         return res.status(200).send({ user: reqUser });
     });
 
-    app.put("/authority/:userId", async (req, res) => {
+    app.put("/authority/users/:userId", async (req, res) => {
         // Get authority's name from url params
         const { userId } = req.params;
 
@@ -163,7 +184,7 @@ module.exports = function (app) {
         return res.status(200).send({ message: "Successfully update user's acces level." });
     });
 
-    app.delete("/authority/:userId", async (req, res) => {
+    app.delete("/authority/users/:userId", async (req, res) => {
         // Get authority's name from url params
         const { userId } = req.params;
 
@@ -192,7 +213,7 @@ module.exports = function (app) {
         }
 
         // Remove requested user from authority
-        const updateRes = await User.updateOne({ _id: reqUser._id }, { authority: null, access_level: "user" });
+        const updateRes = await User.updateOne({ _id: reqUser._id }, { authority: undefined, access_level: "user" });
 
         // Verify removeal was successful
         if (updateRes.nModified == 0) {
@@ -205,25 +226,134 @@ module.exports = function (app) {
 
     app.get("/authority/reports", async (req, res) => {
         // Veirfy user is logged in
-        user = req.user;
+        const user = req.user;
         if (!user) {
             return res.status(401).send({ message: "You need to be logged in to access this route." });
         }
 
-        // Verify that user is a part of an authority
+        // Verify that user is a part of an authority and is an admin
         const authority = user.authority;
-        if (!authority || !(user.access_level == "admin" || user.access_level == "employee")) {
+        if (!authority || user.access_level != "admin") {
             // Send a failed response if not found
-            return res.status(400).send({ message: `Access denied. You are not a member of an authority.` });
+            return res.status(401).send({ message: "Access denied. You do not enough access to this authority" });
         }
 
-        // Get reports connected to authority
-        Report.find({ authority: authority._id })
-            .then((reports) => {
-                return res.send(reports);
-            })
-            .catch((err) => {
-                return res.status(400).send({ error: err.message });
-            });
+        // Get reports tied to authority
+        const reports = await Report.find({ authority: authority._id });
+        console.log(reports);
+
+        // Send a successful response
+        return res.status(200).send({ reports });
+    });
+
+    app.get("/authority/reports/:reportId", async (req, res) => {
+        // Get url parameters
+        const { reportId } = req.params;
+
+        // Veirfy user is logged in
+        const user = req.user;
+        if (!user) {
+            return res.status(401).send({ message: "You need to be logged in to access this route." });
+        }
+
+        // Verify that user is a part of an authority and is an admin
+        const authority = user.authority;
+        if (!authority || user.access_level != "admin") {
+            // Send a failed response if not found
+            return res.status(401).send({ message: "Access denied. You do not enough access to this authority" });
+        }
+
+        // Verify the requested report exist
+        const report = await Report.findById(reportId).populate("author");
+        if (!report) {
+            return res.status(400).send({ message: "Could not find requested report." });
+        }
+
+        // Verify report belongs to users authority
+        if (String(report.authority) != String(authority._id)) {
+            return res.status(401).send({ message: "You do not have access to this report." });
+        }
+
+        // Send succussful response
+        return res.status(200).send({ report });
+    });
+
+    app.put("/authority/reports/:reportId", async (req, res) => {
+        // Get url parameters
+        const { reportId } = req.params;
+
+        // Veirfy user is logged in
+        const user = req.user;
+        if (!user) {
+            return res.status(401).send({ message: "You need to be logged in to access this route." });
+        }
+
+        // Verify that user is a part of an authority and is an admin
+        const authority = user.authority;
+        if (!authority || user.access_level != "admin") {
+            // Send a failed response if not found
+            return res.status(401).send({ message: "Access denied. You do not enough access to this authority" });
+        }
+
+        // Verify the requested report exist
+        const report = await Report.findById(reportId).populate("author");
+        if (!report) {
+            return res.status(400).send({ message: "Could not find requested report." });
+        }
+
+        // Verify report belongs to users authority
+        if (String(report.authority) != String(authority._id)) {
+            return res.status(401).send({ message: "You do not have access to this report." });
+        }
+
+        // Update report
+        const updatedReport = await Report.findByIdAndUpdate(reportId, req.body, { new: true });
+
+        // Verify update was successful
+        if (!updatedReport) {
+            return ress.status(400).send({ message: "Error occured while updating report." });
+        }
+
+        // Send a successful response
+        return res.status(200).send({ report: updatedReport });
+    });
+
+    app.delete("/authority/reports/:reportId", async (req, res) => {
+        // Get url parameters
+        const { reportId } = req.params;
+
+        // Veirfy user is logged in
+        const user = req.user;
+        if (!user) {
+            return res.status(401).send({ message: "You need to be logged in to access this route." });
+        }
+
+        // Verify that user is a part of an authority and is an admin
+        const authority = user.authority;
+        if (!authority || user.access_level != "admin") {
+            // Send a failed response if not found
+            return res.status(401).send({ message: "Access denied. You do not enough access to this authority" });
+        }
+
+        // Verify the requested report exist
+        const report = await Report.findById(reportId).populate("author");
+        if (!report) {
+            return res.status(400).send({ message: "Could not find requested report." });
+        }
+
+        // Verify report belongs to users authority
+        if (String(report.authority) != String(authority._id)) {
+            return res.status(401).send({ message: "You do not have access to this report." });
+        }
+
+        // Delete Report
+        try {
+            await Report.deleteOne({ _id: reportId });
+        } catch (err) {
+            return res.status(400).send({ message: err.message });
+        }
+
+        // Send successful response
+        return res.status(200).send({ message: "Successfully deleted report." });
     });
 };

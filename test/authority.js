@@ -71,6 +71,7 @@ describe("Authorities", function () {
             title: "report",
             details: "report details",
             author: userId,
+            authority: authorityId,
         });
         report.save();
         done();
@@ -112,8 +113,8 @@ describe("Authorities", function () {
             });
     });
 
-    it("should get specifc user at GET /authority/:userId", function (done) {
-        adminAgent.get(`/authority/${userId}`).end((err, res) => {
+    it("should get specifc user at GET /authority/users/:userId", function (done) {
+        adminAgent.get(`/authority/users/${userId}`).end((err, res) => {
             console.log(res.body);
             expect(res).to.have.status(200);
             expect(res.body).to.be.an("object");
@@ -121,8 +122,8 @@ describe("Authorities", function () {
         });
     });
 
-    it("should not get specifc user at GET /authority/:userId is not authority admin", function (done) {
-        agent.get(`/authority/${userId}`).end((err, res) => {
+    it("should not get specifc user at GET /authority/users/:userId is not authority admin", function (done) {
+        agent.get(`/authority/users/${userId}`).end((err, res) => {
             console.log(res.body);
             expect(res).to.have.status(401);
             expect(res.body).to.be.an("object");
@@ -131,9 +132,9 @@ describe("Authorities", function () {
         });
     });
 
-    it("should update specifc user access_level at PUT /authority/:userId", function (done) {
+    it("should update specifc user access_level at PUT /authority/users/:userId", function (done) {
         adminAgent
-            .put(`/authority/${userId}`)
+            .put(`/authority/users/${userId}`)
             .set("content-type", "application/json")
             .send({ access_level: "employee" })
             .end((err, res) => {
@@ -143,9 +144,9 @@ describe("Authorities", function () {
             });
     });
 
-    it("should not update specifc user access_level at PUT /authority/:userId if not authority admin", function (done) {
+    it("should not update specifc user access_level at PUT /authority/users/:userId if not authority admin", function (done) {
         agent
-            .put(`/authority/${userId}`)
+            .put(`/authority/users/${userId}`)
             .set("content-type", "application/json")
             .send({ access_level: "employee" })
             .end((err, res) => {
@@ -155,9 +156,9 @@ describe("Authorities", function () {
             });
     });
 
-    it("should remove user from authority at DELETE /authority/:userId", function (done) {
+    it("should remove user from authority at DELETE /authority/users/:userId", function (done) {
         adminAgent
-            .delete(`/authority/${userId}`)
+            .delete(`/authority/users/${userId}`)
             .set("content-type", "application/json")
             .send({})
             .then(function (res) {
@@ -171,9 +172,9 @@ describe("Authorities", function () {
             });
     });
 
-    it("should not remove user from authority at DELETE /authority/:userId if not authority admin", function (done) {
+    it("should not remove user from authority at DELETE /authority/users/:userId if not authority admin", function (done) {
         agent
-            .delete(`/authority/${userId}`)
+            .delete(`/authority/users/${userId}`)
             .set("content-type", "application/json")
             .send({})
             .end((err, res) => {
@@ -182,6 +183,94 @@ describe("Authorities", function () {
                 expect(res.body).to.have.property("message");
                 done();
             });
+    });
+
+    it("should get all authority reports at GET /authority/reports", function (done) {
+        adminAgent.get("/authority/reports").end((err, res) => {
+            console.log(res.body);
+            res.should.have.status(200);
+            expect(res.body).to.have.property("reports");
+            expect(res.body.reports).to.be.an("array");
+            done();
+        });
+    });
+
+    it("should not get all authority reports at GET /authority/reports if no authority", function (done) {
+        agent.get("/authority/reports").end((err, res) => {
+            console.log(res.body);
+            res.should.have.status(401);
+            done();
+        });
+    });
+
+    it("should get specifc report at GET /authority/reports/:reportId", function (done) {
+        adminAgent.get(`/authority/reports/${reportId}`).end((err, res) => {
+            console.log(res.body);
+            res.should.have.status(200);
+            expect(res.body).to.be.an("object");
+            expect(res.body).to.have.property("report");
+            expect(res.body.report).to.be.an("object");
+            done();
+        });
+    });
+
+    it("should not get specifc report at GET /authority/reports/:reportId if no authority", function (done) {
+        agent.get(`/authority/reports/${reportId}`).end((err, res) => {
+            console.log(res.body);
+            res.should.have.status(401);
+            expect(res.body).to.be.an("object");
+            expect(res.body).to.have.property("message");
+            done();
+        });
+    });
+
+    it("should update specifc report at PUT /authority/reports/:reportId", function (done) {
+        adminAgent
+            .put(`/authority/reports/${reportId}`)
+            .set("content-type", "application/json")
+            .send({ details: "new details" })
+            .end((err, res) => {
+                console.log(res.body);
+                res.should.have.status(200);
+                expect(res.body).to.be.an("object");
+                expect(res.body).to.have.property("report");
+                expect(res.body.report.details).to.equal("new details");
+                done();
+            });
+    });
+
+    it("should not update specifc report at PUT /authority/reports/:reportId if not authority admin", function (done) {
+        agent
+            .put(`/authority/reports/${reportId}`)
+            .set("content-type", "application/json")
+            .send({ details: "new details" })
+            .end((err, res) => {
+                console.log(res.body);
+                res.should.have.status(401);
+                expect(res.body).to.be.an("object");
+                expect(res.body).to.property("message");
+                done();
+            });
+    });
+
+    it("should delete report at DELET /authority/reports/:reportId", function (done) {
+        adminAgent.delete(`/authority/reports/${reportId}`).end((err, res) => {
+            console.log(res.body);
+            res.should.have.status(200);
+            expect(res.body).to.be.an("object");
+            expect(res.body).to.have.property("message");
+            done();
+        });
+    });
+
+    it("should not delete report at DELET /authority/reports/:reportId is not authority admin", function (done) {
+        agent.delete(`/authority/reports/${reportId}`).end((err, res) => {
+            console.log(res.body);
+            res.should.have.status(401);
+            expect(res.body).to.be.an("object");
+            expect(res.body).to.have.property("message");
+            done();
+        });
     });
 
     after(async function () {
