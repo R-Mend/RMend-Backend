@@ -155,9 +155,9 @@ describe("Authorities", function () {
             });
     });
 
-    it("should remove user from authority at PUT /authority/remove/:userId", function (done) {
+    it("should remove user from authority at DELETE /authority/:userId", function (done) {
         adminAgent
-            .put(`/authority/remove/${userId}`)
+            .delete(`/authority/${userId}`)
             .set("content-type", "application/json")
             .send({})
             .then(function (res) {
@@ -171,9 +171,9 @@ describe("Authorities", function () {
             });
     });
 
-    it("should not remove user from authority at PUT /authority/remove/:userId if not authority admin", function (done) {
+    it("should not remove user from authority at DELETE /authority/:userId if not authority admin", function (done) {
         agent
-            .put(`/authority/remove/${userId}`)
+            .delete(`/authority/${userId}`)
             .set("content-type", "application/json")
             .send({})
             .end((err, res) => {
