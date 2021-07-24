@@ -163,6 +163,46 @@ module.exports = function (app) {
         return res.status(200).send({ message: "Successfully update user's acces level." });
     });
 
+    app.delete("/authority/:userId", async (req, res) => {
+        // Get authority's name from url params
+        const { userId } = req.params;
+
+        // Veirfy user is logged in
+        const user = req.user;
+        if (!user) {
+            return res.status(401).send({ message: "You need to be logged in to access this route." });
+        }
+
+        // Verify that user is a part of an authority and is an admin
+        const authority = user.authority;
+        if (!authority || user.access_level != "admin") {
+            // Send a failed response if not found
+            return res.status(401).send({ message: "Access denied. You do not enough access to this authority" });
+        }
+
+        // Verify requested user exists
+        const reqUser = await User.findById(userId);
+        if (!reqUser) {
+            return res.status(400).send({ message: "Requested user does not exist." });
+        }
+
+        // Verify requested user is a member of users authority
+        if (reqUser.authority != String(user.authority._id)) {
+            return res.status(400).send({ message: "Requested user is not a member of your organization." });
+        }
+
+        // Remove requested user from authority
+        const updateRes = await User.updateOne({ _id: reqUser._id }, { authority: null, access_level: "user" });
+
+        // Verify removeal was successful
+        if (updateRes.nModified == 0) {
+            return res.status(400).send({ message: "Error occured while removing user from authority." });
+        }
+
+        // Send a successful response
+        return res.status(200).send({ message: "Successfully removed user from authority." });
+    });
+
     app.get("/authority/reports", async (req, res) => {
         // Veirfy user is logged in
         user = req.user;
