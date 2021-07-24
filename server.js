@@ -3,6 +3,7 @@ const express = require('express');
 const expressValidator = require('express-validator');
 var cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+const User = require('./models/User.js');
 dotenv.config();
 
 // Set Database
@@ -20,14 +21,17 @@ app.use(expressValidator());
 app.use(cookieParser());
 
 // Auth Checker
-var checkAuth = (req, res, next) => {
+var checkAuth = async (req, res, next) => {
   console.log("Checking authentication");
   if (typeof req.cookies.nToken === "undefined" || req.cookies.nToken === null) {
     req.user = null;
   } else {
     var token = req.cookies.nToken;
     var decodedToken = jwt.decode(token, { complete: true }) || {};
-    req.user = decodedToken.payload;
+    var user = decodedToken.payload;
+
+    current_user = await User.findById(user._id).populate('authority');
+    req.user = current_user
   }
   next();
 };
@@ -36,6 +40,7 @@ app.use(checkAuth);
 // Setup Controllers
 require('./controllers/auth.js')(app);
 require('./controllers/reports.js')(app);
+require('./controllers/authorities.js')(app);
 
 // Listen to Port
 if(!module.parent){
