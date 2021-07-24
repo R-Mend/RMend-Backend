@@ -114,6 +114,7 @@ describe("Authorities", function () {
 
     it("should get specifc user at GET /authority/:userId", function (done) {
         adminAgent.get(`/authority/${userId}`).end((err, res) => {
+            console.log(res.body);
             expect(res).to.have.status(200);
             expect(res.body).to.be.an("object");
             done();
@@ -122,11 +123,36 @@ describe("Authorities", function () {
 
     it("should not get specifc user at GET /authority/:userId is not authority admin", function (done) {
         agent.get(`/authority/${userId}`).end((err, res) => {
+            console.log(res.body);
             expect(res).to.have.status(401);
             expect(res.body).to.be.an("object");
             expect(res.body).to.have.property("message");
             done();
         });
+    });
+
+    it("should update specifc user access_level at PUT /authority/:userId", function (done) {
+        adminAgent
+            .put(`/authority/${userId}`)
+            .set("content-type", "application/json")
+            .send({ access_level: "employee" })
+            .end((err, res) => {
+                console.log(res.body);
+                expect(res).to.have.status(200);
+                done();
+            });
+    });
+
+    it("should not update specifc user access_level at PUT /authority/:userId if not authority admin", function (done) {
+        agent
+            .put(`/authority/${userId}`)
+            .set("content-type", "application/json")
+            .send({ access_level: "employee" })
+            .end((err, res) => {
+                console.log(res.body);
+                expect(res).to.have.status(401);
+                done();
+            });
     });
 
     it("should remove user from authority at PUT /authority/remove/:userId", function (done) {
