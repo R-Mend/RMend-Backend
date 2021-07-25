@@ -19,6 +19,8 @@ describe("Reports", function () {
     var otherId = "6ddf86af01c5992ec4fa1c8c";
     var userId = "5ddf76af01c5992ec4fa1c9c";
     var reportId = "6ddf784f9dbb9f1530b96022";
+    let otherToken;
+    let userToken;
 
     before(function (done) {
         const authority = new Authority({
@@ -43,6 +45,10 @@ describe("Reports", function () {
             })
             .end(function (err, res) {
                 expect(res.status).to.equal(200);
+                expect(res.body).to.be.an("object");
+                expect(res.body).to.have.property("user");
+                expect(res.body.user).to.have.property("token");
+                otherToken = res.body.user.token;
                 done();
             });
     });
@@ -59,6 +65,10 @@ describe("Reports", function () {
             })
             .end(function (err, res) {
                 expect(res.status).to.equal(200);
+                expect(res.body).to.be.an("object");
+                expect(res.body).to.have.property("user");
+                expect(res.body.user).to.have.property("token");
+                userToken = res.body.user.token;
                 done();
             });
     });
@@ -76,13 +86,16 @@ describe("Reports", function () {
     });
 
     it("should get all reports at GET /reports", function (done) {
-        agent.get("/reports").end((err, res) => {
-            console.log(res.body);
-            res.should.have.status(200);
-            expect(res.body).to.have.property("reports");
-            expect(res.body.reports).to.be.an("array");
-            done();
-        });
+        agent
+            .get("/reports")
+            .set({ Authorization: `Bearer ${userToken}` })
+            .end((err, res) => {
+                console.log(res.body);
+                res.should.have.status(200);
+                expect(res.body).to.have.property("reports");
+                expect(res.body.reports).to.be.an("array");
+                done();
+            });
     });
 
     it("should create with valid attributes at POST /report/new", async function () {
@@ -90,6 +103,7 @@ describe("Reports", function () {
 
         agent
             .post("/report/new")
+            .set({ Authorization: `Bearer ${userToken}` })
             .set("content-type", "application/json")
             .send({ title: "report", details: "detials", authority: authorityId })
             .end(async (err, res) => {
@@ -102,29 +116,36 @@ describe("Reports", function () {
     });
 
     it("should get all user reports at GET /my/reports", function (done) {
-        agent.get("/my/reports").end((err, res) => {
-            console.log(res.body);
-            res.should.have.status(200);
-            expect(res.body).to.have.property("reports");
-            expect(res.body.reports).to.be.an("array");
-            done();
-        });
+        agent
+            .get("/my/reports")
+            .set({ Authorization: `Bearer ${userToken}` })
+            .end((err, res) => {
+                console.log(res.body);
+                res.should.have.status(200);
+                expect(res.body).to.have.property("reports");
+                expect(res.body.reports).to.be.an("array");
+                done();
+            });
     });
 
     it("should get specifc report at GET /reports/:reportId", function (done) {
-        agent.get(`/reports/${reportId}`).end((err, res) => {
-            console.log(res.body);
-            res.should.have.status(200);
-            expect(res.body).to.be.an("object");
-            expect(res.body).to.have.property("report");
-            expect(res.body.report).to.be.an("object");
-            done();
-        });
+        agent
+            .get(`/reports/${reportId}`)
+            .set({ Authorization: `Bearer ${userToken}` })
+            .end((err, res) => {
+                console.log(res.body);
+                res.should.have.status(200);
+                expect(res.body).to.be.an("object");
+                expect(res.body).to.have.property("report");
+                expect(res.body.report).to.be.an("object");
+                done();
+            });
     });
 
     it("should update specifc report at PUT /reports/:reportId", function (done) {
         agent
             .put(`/reports/${reportId}`)
+            .set({ Authorization: `Bearer ${userToken}` })
             .set("content-type", "application/json")
             .send({ details: "new details" })
             .end((err, res) => {
@@ -140,6 +161,7 @@ describe("Reports", function () {
     it("should not update specifc report at PUT /reports/:reportId if not report author", function (done) {
         otherAgent
             .put(`/reports/${reportId}`)
+            .set({ Authorization: `Bearer ${otherToken}` })
             .set("content-type", "application/json")
             .send({ details: "new details" })
             .end((err, res) => {
@@ -152,23 +174,29 @@ describe("Reports", function () {
     });
 
     it("should not delete report at DELETE /reports/:reportId is not report author", function (done) {
-        otherAgent.delete(`/reports/${reportId}`).end((err, res) => {
-            console.log(res.body);
-            res.should.have.status(401);
-            expect(res.body).to.be.an("object");
-            expect(res.body).to.have.property("message");
-            done();
-        });
+        otherAgent
+            .delete(`/reports/${reportId}`)
+            .set({ Authorization: `Bearer ${otherToken}` })
+            .end((err, res) => {
+                console.log(res.body);
+                res.should.have.status(401);
+                expect(res.body).to.be.an("object");
+                expect(res.body).to.have.property("message");
+                done();
+            });
     });
 
     it("should delete report at DELETE /reports/:reportId", function (done) {
-        agent.delete(`/reports/${reportId}`).end((err, res) => {
-            console.log(res.body);
-            res.should.have.status(200);
-            expect(res.body).to.be.an("object");
-            expect(res.body).to.have.property("message");
-            done();
-        });
+        agent
+            .delete(`/reports/${reportId}`)
+            .set({ Authorization: `Bearer ${userToken}` })
+            .end((err, res) => {
+                console.log(res.body);
+                res.should.have.status(200);
+                expect(res.body).to.be.an("object");
+                expect(res.body).to.have.property("message");
+                done();
+            });
     });
 
     after(async function () {

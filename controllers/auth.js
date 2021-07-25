@@ -9,17 +9,11 @@ module.exports = function (app) {
         user.save()
             .then((user) => {
                 var token = jwt.sign({ _id: user._id }, process.env.SECRET, { expiresIn: "7d" });
-                res.cookie("nToken", token, { maxAge: 900000, httpOnly: true });
-                return res.status(200).send({ message: "Successfully registured new account." });
+                return res.status(200).send({ user: { ...user, token } });
             })
             .catch((err) => {
                 return res.status(400).send({ err: err });
             });
-    });
-
-    app.get("/logout", (req, res) => {
-        res.clearCookie("nToken");
-        return res.status(200).send({ message: "Successfully logged out." });
     });
 
     app.post("/login", (req, res) => {
@@ -27,21 +21,27 @@ module.exports = function (app) {
 
         User.findOne({ email }, "email password")
             .then((user) => {
+                // Verify user exist with the given email
                 if (!user) {
                     return res.status(401).send({ message: "Could not find user with this email." });
                 }
 
+                // Verify password is correct
                 user.comparePassword(password, (err, isMatch) => {
                     if (!isMatch) {
                         return res.status(401).send({ message: "Email or password was incorrect." });
                     }
 
+                    // Create jwt token for authentication
                     const token = jwt.sign({ _id: user._id, username: user.username }, process.env.SECRET, {
                         expiresIn: "7d",
                     });
 
-                    res.cookie("nToken", token, { maxAge: 900000, httpOnly: true });
-                    return res.status(200).send({ message: "Successfully signed in." });
+                    // Remove password from user
+                    delete user["password"];
+
+                    // Send successful response
+                    return res.status(200).send({ user: { ...user, token } });
                 });
             })
             .catch((err) => {

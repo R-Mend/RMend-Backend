@@ -22,16 +22,22 @@ app.use(cookieParser());
 
 // Auth Checker
 var checkAuth = async (req, res, next) => {
-    if (typeof req.cookies.nToken === "undefined" || req.cookies.nToken === null) {
-        req.user = null;
-    } else {
-        var token = req.cookies.nToken;
-        var decodedToken = jwt.decode(token, { complete: true }) || {};
-        var user = decodedToken.payload;
+    console.log("Checking Authentication.");
+    const bearerHeader = req.headers["authorization"];
+    var current_user = null;
 
-        current_user = await User.findById(user._id).populate("authority");
-        req.user = current_user;
+    if (typeof bearerHeader !== "undefined" && bearerHeader !== null) {
+        const bearer = bearerHeader.split(" ");
+        const bearerToken = bearer[1];
+
+        try {
+            const decodedToken = await jwt.verify(bearerToken, process.env.SECRET);
+            current_user = await User.findById(decodedToken._id).populate("authority");
+        } catch (err) {
+            console.log(err.message);
+        }
     }
+    req.user = current_user;
     next();
 };
 app.use(checkAuth);
