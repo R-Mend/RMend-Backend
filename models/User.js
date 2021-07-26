@@ -4,8 +4,6 @@ const Schema = mongoose.Schema;
 
 const UserSchema = new Schema(
     {
-        createatedAt: { type: Date },
-        updatedAt: { type: Date },
         password: { type: String, select: false },
         username: { type: String, required: true },
         email: { type: String, required: true, match: /.+\@.+\..+/, unique: true },
@@ -13,7 +11,7 @@ const UserSchema = new Schema(
         authority: { type: Schema.Types.ObjectId, ref: "Authority", required: false },
         access_level: { type: String, default: "user" },
     },
-    { timestamps: { createdAt: "created_at" } }
+    { timestamps: true }
 );
 
 UserSchema.pre("save", async function (next) {

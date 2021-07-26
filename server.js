@@ -3,6 +3,7 @@ const express = require("express");
 const expressValidator = require("express-validator");
 var cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const cors = require("cors");
 const User = require("./models/User.js");
 dotenv.config();
 
@@ -11,6 +12,9 @@ require("./data/report-db");
 
 // Create app
 const app = express();
+
+// Setup CORS
+app.use(cors());
 
 // Setup Body Parser and Express Validator
 app.use(express.json());

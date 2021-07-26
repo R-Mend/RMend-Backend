@@ -82,6 +82,8 @@ describe("Authorities", function () {
             details: "report details",
             author: userId,
             authority: authorityId,
+            priority: false,
+            in_review: false,
         });
         report.save();
         done();

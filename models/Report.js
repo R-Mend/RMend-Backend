@@ -7,6 +7,8 @@ const ReportSchema = new Schema(
         details: { type: String, required: true },
         author: { type: Schema.Types.ObjectId, ref: "User", required: true },
         authority: { type: Schema.Types.ObjectId, ref: "Authority", required: true },
+        priority: { type: Boolean, required: true },
+        in_review: { type: Boolean, required: true },
     },
     { timestamps: true }
 );

@@ -6,20 +6,21 @@ module.exports = function (app) {
         // TODO: Add more validation so that users can't registure themself into an authority
         const user = new User(req.body);
 
-        user.save()
-            .then((user) => {
-                var token = jwt.sign({ _id: user._id }, process.env.SECRET, { expiresIn: "7d" });
-                return res.status(200).send({ user: { ...user, token } });
-            })
-            .catch((err) => {
-                return res.status(400).send({ err: err });
-            });
+        user.save((err, newUser) => {
+            if (err) {
+                return res.status(400).send({ message: err.message });
+            }
+
+            var token = jwt.sign({ _id: user._id }, process.env.SECRET, { expiresIn: "7d" });
+            return res.status(200).send({ user: { ...newUser._doc, token } });
+        });
     });
 
     app.post("/login", (req, res) => {
         const { email, password } = req.body;
 
-        User.findOne({ email }, "email password")
+        User.findOne({ email })
+            .select("+password")
             .then((user) => {
                 // Verify user exist with the given email
                 if (!user) {
@@ -38,10 +39,10 @@ module.exports = function (app) {
                     });
 
                     // Remove password from user
-                    delete user["password"];
+                    delete user._doc["password"];
 
                     // Send successful response
-                    return res.status(200).send({ user: { ...user, token } });
+                    return res.status(200).send({ user: { ...user._doc, token } });
                 });
             })
             .catch((err) => {

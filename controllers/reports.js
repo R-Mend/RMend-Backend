@@ -38,7 +38,7 @@ module.exports = function (app) {
         }
 
         // Create new report and set report author to current user
-        const report = new Report({ ...req.body, author: user._id });
+        const report = new Report({ ...req.body, author: user._id, priority: false, under_review: false });
 
         // Save report to database
         await report.save();

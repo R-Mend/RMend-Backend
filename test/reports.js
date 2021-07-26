@@ -80,6 +80,8 @@ describe("Reports", function () {
             details: "report details",
             author: userId,
             authority: authorityId,
+            priority: false,
+            in_review: false,
         });
         await report.save();
         return;
