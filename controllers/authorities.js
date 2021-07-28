@@ -81,6 +81,27 @@ module.exports = function (app) {
         return res.status(200).send({ message: "User has been accepted into the authority." });
     });
 
+    app.get("/authority/requests", async (req, res) => {
+        // Veirfy user is logged in
+        const user = req.user;
+        if (!user) {
+            return res.status(401).send({ message: "You need to be logged in to access this route." });
+        }
+
+        // Verify that user is a part of an authority and is an admin
+        const authority = user.authority;
+        if (!authority || user.access_level != "admin") {
+            // Send a failed response if not found
+            return res.status(401).send({ message: "Access denied. You do not enough access to this authority" });
+        }
+
+        // Get authority's join requests
+        const requests = authority.requests;
+
+        // Return a successful response
+        return res.status(200).send({ requests });
+    });
+
     app.get("/authority/users", async (req, res) => {
         // Veirfy user is logged in
         const user = req.user;

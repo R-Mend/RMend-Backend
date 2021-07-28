@@ -102,6 +102,34 @@ describe("Authorities", function () {
             });
     });
 
+    it("should get all join requests at GET /authority/requests", function (done) {
+        adminAgent
+            .get("/authority/requests")
+            .set({ Authorization: `Bearer ${adminToken}` })
+            .end((err, res) => {
+                console.log(res.body);
+                expect(res).to.have.status(200);
+                expect(res.body).to.be.an("object");
+                expect(res.body).to.have.property("requests");
+                expect(res.body.requests).to.be.an("array");
+                expect(res.body.requests).to.have.length(1);
+                done();
+            });
+    });
+
+    it("should not get all join requests at GET /authority/requests", function (done) {
+        agent
+            .get("/authority/requests")
+            .set({ Authorization: `Bearer ${userToken}` })
+            .end((err, res) => {
+                console.log(res.body);
+                expect(res).to.have.status(401);
+                expect(res.body).to.be.an("object");
+                expect(res.body).to.have.property("message");
+                done();
+            });
+    });
+
     it("should update user authority with accept at PUT /authority/accept-request/:userId", function (done) {
         adminAgent
             .put(`/authority/accept-request/${userId}`)
@@ -123,6 +151,33 @@ describe("Authorities", function () {
             .send({})
             .end((err, res) => {
                 expect(res).to.have.status(401);
+                expect(res.body).to.have.property("message");
+                done();
+            });
+    });
+
+    it("should get all users at GET /authority/users", function (done) {
+        adminAgent
+            .get("/authority/users")
+            .set({ Authorization: `Bearer ${adminToken}` })
+            .end((err, res) => {
+                console.log(res.body);
+                expect(res).to.have.status(200);
+                expect(res.body).to.be.an("object");
+                expect(res.body).to.have.property("users");
+                expect(res.body.users).to.be.an("array");
+                done();
+            });
+    });
+
+    it("should not get all users at GET /authority/users if not authority admin", function (done) {
+        agent
+            .get("/authority/users")
+            .set({ Authorization: `Bearer ${userToken}` })
+            .end((err, res) => {
+                console.log(res.body);
+                expect(res).to.have.status(401);
+                expect(res.body).to.be.an("object");
                 expect(res.body).to.have.property("message");
                 done();
             });
