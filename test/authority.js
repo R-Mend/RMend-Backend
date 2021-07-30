@@ -243,7 +243,7 @@ describe("Authorities", function () {
             .then(function (res) {
                 res.should.have.status(200);
                 expect(res.body).to.be.an("object");
-                expect(res.body).to.haveOwnProperty("message");
+                expect(res.body).to.haveOwnProperty("user_id");
                 done();
             })
             .catch((err) => {
@@ -355,7 +355,7 @@ describe("Authorities", function () {
                 console.log(res.body);
                 res.should.have.status(200);
                 expect(res.body).to.be.an("object");
-                expect(res.body).to.have.property("message");
+                expect(res.body).to.have.property("report_id");
                 done();
             });
     });

@@ -194,15 +194,19 @@ module.exports = function (app) {
         }
 
         // Update users access_level
-        const updateRes = await User.updateOne({ _id: reqUser._id }, { access_level: access_level });
+        const updatedDoc = await User.findByIdAndUpdate(
+            { _id: reqUser._id },
+            { access_level: access_level },
+            { new: true }
+        );
 
         // Verify update was a success
-        if (updateRes.nModified == 0) {
+        if (!updatedDoc) {
             return res.status(400).send({ message: "Error occured while update users access level." });
         }
 
         // Send a successful response
-        return res.status(200).send({ message: "Successfully update user's acces level." });
+        return res.status(200).send({ user: updatedDoc });
     });
 
     app.delete("/authority/users/:userId", async (req, res) => {
@@ -242,7 +246,7 @@ module.exports = function (app) {
         }
 
         // Send a successful response
-        return res.status(200).send({ message: "Successfully removed user from authority." });
+        return res.status(200).send({ user_id: userId });
     });
 
     app.get("/authority/reports", async (req, res) => {
@@ -371,7 +375,7 @@ module.exports = function (app) {
         try {
             await Report.deleteOne({ _id: reportId });
         } catch (err) {
-            return res.status(400).send({ message: err.message });
+            return res.status(400).send({ report_id: reportId });
         }
 
         // Send successful response
